@@ -125,14 +125,14 @@ module Sidekiq
         Sidekiq::Logstash.configuration.filter_args
       end
 
-      def deep_stringify!(args)
-        case args
+      def deep_stringify!(payload)
+        case payload
         when Hash
-          Hash[args.map { |key, value| [deep_stringify!(key), deep_stringify!(value)] }]
+          payload.each { |key, value| payload[key] = deep_stringify!(value) if payload.key?(key) }
         when Array
-          args.map! { |val| deep_stringify!(val) }
+          payload.map! { |value| deep_stringify!(value) }
         else
-          args.to_s
+          payload.to_s
         end
       end
     end
