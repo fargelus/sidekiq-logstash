@@ -90,6 +90,13 @@ module Sidekiq
         # Needs to map all args to strings for ElasticSearch compatibility
         deep_stringify!(payload['args'])
 
+        job_args = payload['args'].first
+        if job_args.is_a?(Hash) && job_args.key?('arguments')
+            payload['job_args'] = job_args['arguments']
+              .select { |arg| arg.is_a?(Hash) }
+              .reduce({}, :merge)
+        end
+
         # Needs to map all unique_args to strings for ElasticSearch
         # compatibility in case sidekiq-unique-jobs is used
         deep_stringify!(payload['unique_args'])
@@ -128,7 +135,7 @@ module Sidekiq
       def deep_stringify!(payload)
         case payload
         when Hash
-          payload.each { |key, value| payload[key] = deep_stringify!(value) if payload.key?(key) }
+          payload.each { |key, value| payload[key] = deep_stringify!(value) }
         when Array
           payload.map! { |value| deep_stringify!(value) }
         else
